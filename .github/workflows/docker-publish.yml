@@ -1,0 +1,42 @@
+name: Build and push Docker image
+
+# Когда запускать: на каждый push в main + кнопка ручного запуска в UI
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    # Права встроенного токена GITHUB_TOKEN: читать код и писать в GitHub Packages (ghcr.io)
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # В отличие от GitLab, код сам не клонируется — это отдельный шаг
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        run: |
+          # Имя образа в ghcr.io должно быть в нижнем регистре
+          IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}
+          SHORT_SHA=${GITHUB_SHA::7}
+
+          docker build \
+            --build-arg APP_VERSION=$SHORT_SHA \
+            -t $IMAGE:$SHORT_SHA \
+            -t $IMAGE:latest \
+            .
+
+          docker push --all-tags $IMAGE
