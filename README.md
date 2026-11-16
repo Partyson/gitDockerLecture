@@ -42,3 +42,6 @@ curl -X POST http://localhost:8000/tasks \
 ghcr.io/<owner>/<repo>:latest
 ghcr.io/<owner>/<repo>:<short-sha>
 ```
+
+
+Всем привет!
